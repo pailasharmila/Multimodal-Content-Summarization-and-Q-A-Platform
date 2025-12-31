@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-R" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - AI Second Brain</title>
+    <style>
+      :root {
+        --primary-color: #007bff;
+        --light-gray: #f4f4f8;
+        --gray: #ccc;
+        --dark-gray: #555;
+        --white: #ffffff;
+        --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --danger: #dc3545;
+        --success: #28a745;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        background-color: var(--light-gray);
+        margin: 0;
+        padding: 20px;
+        color: var(--dark-gray);
+        /* Center the card vertically */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 90vh;
+      }
+
+      .container {
+        max-width: 450px;
+        width: 100%;
+        margin: 20px auto;
+        padding: 0 20px;
+      }
+
+      h2 {
+        text-align: center;
+        color: #333;
+        margin-top: 0;
+      }
+
+      .card {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 24px 30px;
+        margin-bottom: 25px;
+        box-shadow: var(--shadow);
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+      }
+
+      label {
+        font-weight: 600;
+        margin-top: 15px;
+        margin-bottom: 5px;
+      }
+
+      input[type="email"],
+      input[type="password"] {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        box-sizing: border-box; /* Important */
+      }
+
+      button {
+        margin-top: 20px;
+        padding: 12px 20px;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--white);
+        background-color: var(--primary-color);
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s, box-shadow 0.2s;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .toggle-link {
+        text-align: center;
+        margin-top: 20px;
+      }
+
+      .toggle-link a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      /* This is the general hidden class used by the forms.
+        We keep it here.
+      */
+      .hidden {
+        display: none;
+      }
+
+      .message {
+        text-align: center;
+        margin-top: 15px;
+        font-weight: 600;
+        padding: 10px;
+        border-radius: 8px;
+      }
+      .message.success {
+        color: var(--success);
+        background-color: #eafaf1;
+      }
+      .message.error {
+        color: var(--danger);
+        background-color: #fdeeee;
+      }
+
+      /* --- MODIFIED MODAL STYLES --- */
+      
+      /* This rule is now MORE SPECIFIC. 
+        It will correctly hide the modal on page load.
+      */
+      .modal-overlay.hidden {
+        display: none;
+      }
+
+      /* This is the default "shown" state for the modal.
+        It will only apply when the 'hidden' class is removed.
+      */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .modal-buttons {
+        display: flex;
+        justify-content: space-around; /* Gives even space */
+        margin-top: 25px;
+      }
+
+      /* NEW: Make modal buttons larger */
+      .modal-buttons button {
+        padding: 14px 24px;
+        font-size: 18px;
+      }
+
+      /* Style the video button differently */
+      #videoBrainButton {
+        background-color: var(--success);
+      }
+      #videoBrainButton:hover {
+        background-color: #218838; /* A darker green */
+      }
+      /* --- END NEW MODAL STYLES --- */
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <form id="loginForm">
+          <h2>Login 🧠</h2>
+
+          <label for="loginEmail">Email (as username)</label>
+          <input
+            type="email"
+            id="loginEmail"
+            placeholder="your@email.com"
+            required
+          />
+
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" required />
+
+          <div id="loginMessage" class="message hidden"></div>
+
+          <button type="submit">Login</button>
+
+          <p class="toggle-link">
+            Don't have an account? <a id="showRegisterLink">Register here</a>
+          </p>
+        </form>
+
+        <form id="registerForm" class="hidden">
+          <h2>Create Account</h2>
+
+          <label for="registerEmail">Email</label>
+          <input
+            type="email"
+            id="registerEmail"
+            placeholder="your@email.com"
+            required
+          />
+
+          <label for="registerPassword">Password</label>
+          <input type="password" id="registerPassword" required />
+
+          <div id="registerMessage" class="message hidden"></div>
+
+          <button type="submit">Register</button>
+
+          <p class="toggle-link">
+            Already have an account? <a id="showLoginLink">Login here</a>
+          </p>
+        </form>
+      </div>
+    </div>
+
+    <div id="choiceModal" class="modal-overlay hidden">
+      <div class="card" style="text-align: center; max-width: 500px; width: 90%;">
+        <h2>Login Successful!</h2>
+        <p>Where would you like to go?</p>
+        <div class="modal-buttons">
+          <button id="textBrainButton" type="button">TextBrain</button>
+          <button id="videoBrainButton" type="button">VideoBrain</button>
+        </div>
+      </div>
+    </div>
+    
+    <script>
+      const API_BASE = "http://127.0.0.1:8000";
+
+      // --- Form Elements ---
+      const loginForm = document.getElementById("loginForm");
+      const registerForm = document.getElementById("registerForm");
+      const loginMessage = document.getElementById("loginMessage");
+      const registerMessage = document.getElementById("registerMessage");
+
+      // --- Toggle Links ---
+      const showRegisterLink = document.getElementById("showRegisterLink");
+      const showLoginLink = document.getElementById("showLoginLink");
+
+      // --- MODAL Elements ---
+      const choiceModal = document.getElementById("choiceModal");
+      const textBrainButton = document.getElementById("textBrainButton");
+      const videoBrainButton = document.getElementById("videoBrainButton");
+
+      // --- Toggle Logic ---
+      showRegisterLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        loginForm.classList.add("hidden");
+        registerForm.classList.remove("hidden");
+      });
+
+      showLoginLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        registerForm.classList.add("hidden");
+        loginForm.classList.remove("hidden");
+      });
+
+      // --- 1. LOGIN EVENT HANDLER ---
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        loginMessage.classList.add("hidden"); // Hide previous messages
+
+        const email = document.getElementById("loginEmail").value;
+        const password = document.getElementById("loginPassword").value;
+
+        const formData = new URLSearchParams();
+        formData.append("username", email); // 'username' is the email
+        formData.append("password", password);
+
+        try {
+          const res = await fetch(`${API_BASE}/token`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: formData,
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.detail || "Incorrect email or password");
+          }
+
+          // --- SUCCESS! ---
+          // 1. Save the token
+          localStorage.setItem("accessToken", data.access_token);
+
+          // 2. Show the choice modal
+          // This now works correctly because the CSS rule is more specific
+          choiceModal.classList.remove("hidden");
+          
+        } catch (err) {
+          loginMessage.textContent = err.message;
+          loginMessage.className = "message error"; // Show error
+        }
+      });
+
+      // --- 2. REGISTER EVENT HANDLER ---
+      registerForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        registerMessage.classList.add("hidden"); // Hide previous messages
+
+        const email = document.getElementById("registerEmail").value;
+        const password = document.getElementById("registerPassword").value;
+
+        try {
+          const res = await fetch(`${API_BASE}/register`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.detail || "Registration failed.");
+          }
+
+          // --- SUCCESS! ---
+          registerMessage.textContent =
+            "Registration successful! Please log in.";
+          registerMessage.className = "message success"; // Show success
+          registerForm.reset(); // Clear the form
+
+          // Toggle back to login form
+          setTimeout(() => {
+            registerForm.classList.add("hidden");
+            loginForm.classList.remove("hidden");
+            registerMessage.classList.add("hidden");
+          }, 2000); 
+        } catch (err) {
+          registerMessage.textContent = err.message;
+          registerMessage.className = "message error"; // Show error
+        }
+      });
+
+      // --- 3. MODAL BUTTON HANDLERS ---
+      textBrainButton.addEventListener("click", () => {
+        window.location.href = "text_brain_frontend/index.html";
+      });
+
+      videoBrainButton.addEventListener("click", () => {
+        window.location.href = "video_extracter/video.html";
+      });
+    </script>
+  </body>
+</html>

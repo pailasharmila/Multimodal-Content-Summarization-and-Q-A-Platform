@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Second Brain</title>
+  <style>
+    :root {
+      --primary-color: #007bff;
+      --light-gray: #f4f4f8;
+      --gray: #ccc;
+      --dark-gray: #555;
+      --white: #ffffff;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif;
+      background-color: var(--light-gray);
+      margin: 0;
+      padding: 20px;
+      color: var(--dark-gray);
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 24px 30px;
+      margin-bottom: 25px;
+      box-shadow: var(--shadow);
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #000;
+      border-bottom: 2px solid var(--light-gray);
+      padding-bottom: 10px;
+    }
+
+    /* --- Part 1: Capture Section --- */
+    .capture-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto;
+      gap: 12px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box; /* Important for grid layout */
+    }
+
+    #urlInput {
+      grid-column: 1 / 2;
+      grid-row: 1 / 3;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--white);
+      background-color: var(--primary-color);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s, box-shadow 0.2s;
+      white-space: nowrap;
+    }
+    
+    button:hover {
+      background-color: #0056b3;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    button:disabled {
+      background-color: var(--gray);
+      cursor: not-allowed;
+    }
+
+    #summaryBtn {
+      grid-column: 2 / 3;
+      grid-row: 1 / 2;
+    }
+
+    #saveBtn {
+      grid-column: 2 / 3;
+      grid-row: 2 / 3;
+      background-color: #6c757d;
+    }
+    #saveBtn:hover {
+      background-color: #5a6268;
+    }
+    
+    #captureBtn {
+        margin-top: 12px;
+        width: 100%;
+        background-color: #28a745; /* Green for capture */
+    }
+    #captureBtn:hover {
+        background-color: #218838;
+    }
+
+    /* --- Part 2: Query Section --- */
+    .query-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    #questionInput {
+      flex-grow: 1;
+    }
+
+    #queryResult {
+      margin-top: 20px;
+      padding: 15px;
+      background: var(--light-gray);
+      border-radius: 8px;
+      min-height: 40px;
+      line-height: 1.6;
+      white-space: pre-wrap; /* Preserves formatting */
+    }
+    
+    /* --- Loader (from sample) --- */
+    .loader-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99;
+    }
+    .spinner {
+      border: 8px solid var(--light-gray);
+      border-top: 8px solid var(--primary-color);
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .hidden {
+      display: none;
+    }
+
+    /* --- Summary Modal --- */
+    #summaryModalBackdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+    }
+
+    #summaryModal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 700px;
+      max-height: 80vh;
+      overflow-y: auto;
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      padding: 30px;
+      z-index: 101;
+      box-sizing: border-box;
+    }
+    
+    #closeModalBtn {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      font-size: 30px;
+      font-weight: bold;
+      color: var(--gray);
+      cursor: pointer;
+      line-height: 1;
+    }
+    #closeModalBtn:hover {
+      color: var(--dark-gray);
+    }
+    
+    #summaryModal h3 {
+        margin-top: 0;
+        color: #000;
+    }
+
+    #summaryText {
+      line-height: 1.7;
+      white-space: pre-wrap; /* Preserves newlines in summary */
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>AI Second Brain 🧠</h1>
+
+    <div class="card">
+      <h2>Capture & Summarize</h2>
+      <div class="capture-grid">
+        <input
+          id="urlInput"
+          type="text"
+          placeholder="https://example.com/article..."
+        />
+        <button id="summaryBtn">View Summary</button>
+        <button id="saveBtn" disabled>Save Summary</button>
+      </div>
+      <button id="captureBtn">Capture Article</button>
+    </div>
+
+    <div class="card">
+      <h2>Ask a Question</h2>
+      <div class="query-group">
+        <input
+          id="questionInput"
+          type="text"
+          placeholder="What is the main idea of..."
+        />
+        <button id="queryBtn">Ask</button>
+      </div>
+      <div id="queryResult">Your answer will appear here...</div>
+    </div>
+  </div>
+
+  <div id="loader" class="loader-overlay hidden">
+    <div class="spinner"></div>
+  </div>
+
+  <div id="summaryModalBackdrop" class="hidden"></div>
+  <div id="summaryModal" class="hidden">
+    <span id="closeModalBtn">&times;</span>
+    <h3>Article Summary</h3>
+    <p id="summaryText">Loading summary...</p>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    // --- Get Elements ---
+    const loader = document.getElementById("loader");
+    const urlInput = document.getElementById("urlInput");
+    const questionInput = document.getElementById("questionInput");
+    const queryResult = document.getElementById("queryResult");
+
+    // Modal elements
+    const modalBackdrop = document.getElementById("summaryModalBackdrop");
+    const modal = document.getElementById("summaryModal");
+    const summaryText = document.getElementById("summaryText");
+
+    // --- NEW: Authentication Helper ---
+    
+    /**
+     * Checks for token and redirects to login if missing.
+     * Returns the auth headers if token exists.
+     */
+    function getAuthHeaders() {
+      const token = localStorage.getItem("accessToken");
+      
+      if (!token) {
+        // If no token, redirect to login page
+        alert("You are not logged in. Redirecting...");
+        window.location.href = "login.html";
+        return null; // Stop execution
+      }
+      
+      return {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      };
+    }
+    
+    // --- Helper Functions ---
+    function showLoader() { loader.classList.remove("hidden"); }
+    function hideLoader() { loader.classList.add("hidden"); }
+
+    function showModal() {
+        modalBackdrop.classList.remove("hidden");
+        modal.classList.remove("hidden");
+    }
+    function hideModal() {
+        modalBackdrop.classList.add("hidden");
+        modal.classList.add("hidden");
+    }
+
+    // --- Event Listeners (UPDATED) ---
+
+    // 1. Capture Article
+    document.getElementById("captureBtn").addEventListener("click", async () => {
+      const url = urlInput.value.trim();
+      if (!url) return alert("Please enter a URL!");
+
+      const headers = getAuthHeaders();
+      if (!headers) return; // Stop if not authenticated
+
+      showLoader();
+      queryResult.textContent = "Processing article...";
+      try {
+        const res = await fetch(`${API_BASE}/capture`, {
+          method: "POST",
+          headers: headers, // <-- UPDATED
+          body: JSON.stringify({ url }),
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+            // Handle auth error (e.g., expired token)
+            if (res.status === 401) {
+                alert("Session expired. Please log in again.");
+                window.location.href = "login.html";
+                return;
+            }
+            throw new Error(data.detail || "Unknown error occurred");
+        }
+        
+        alert("File has captured successfully.");
+        queryResult.textContent = `Successfully captured: ${url}`;
+        
+      } catch (err) {
+        queryResult.textContent = `Failed to capture article: ${err.message}`;
+        console.error(err);
+      }
+      hideLoader();
+    });
+
+    // 2. Ask Question
+    document.getElementById("queryBtn").addEventListener("click", async () => {
+      const question = questionInput.value.trim();
+      if (!question) return alert("Please type a question!");
+      
+      const headers = getAuthHeaders();
+      if (!headers) return; // Stop if not authenticated
+
+      showLoader();
+      queryResult.textContent = "Thinking...";
+      try {
+        const res = await fetch(`${API_BASE}/query`, {
+          method: "POST",
+          headers: headers, // <-- UPDATED
+          body: JSON.stringify({ question }),
+        });
+        
+        const data = await res.json();
+
+        if (!res.ok) {
+            if (res.status === 401) {
+                alert("Session expired. Please log in again.");
+                window.location.href = "login.html";
+                return;
+            }
+            throw new Error(data.detail || "Unknown error occurred");
+        }
+
+        queryResult.textContent = data.answer || "No answer found.";
+      } catch (err) {
+        queryResult.textContent = `Failed to fetch answer: ${err.message}`;
+        console.error(err);
+      }
+      hideLoader();
+    });
+    
+    // 3. View Summary
+    document.getElementById("summaryBtn").addEventListener("click", async () => {
+      const url = urlInput.value.trim();
+      if (!url) return alert("Please enter a URL to get its summary!");
+
+      const headers = getAuthHeaders();
+      if (!headers) return; // Stop if not authenticated
+
+      showLoader();
+      summaryText.textContent = "Fetching summary...";
+      showModal();
+      
+      try {
+        const res = await fetch(`${API_BASE}/summary`, {
+          method: "POST",
+          headers: headers, // <-- UPDATED
+          body: JSON.stringify({ url }),
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+            if (res.status === 401) {
+                alert("Session expired. Please log in again.");
+                window.location.href = "login.html";
+                return;
+            }
+            throw new Error(data.detail || "Could not fetch summary.");
+        }
+
+        summaryText.textContent = data.summary;
+      } catch (err) {
+        summaryText.textContent = `Error: ${err.message}`;
+        console.error(err);
+      }
+      hideLoader();
+    });
+
+    // 4. Close Modal Listeners
+    document.getElementById("closeModalBtn").addEventListener("click", hideModal);
+    modalBackdrop.addEventListener("click", hideModal);
+    
+    // --- NEW: Check login status on page load ---
+    (function() {
+        // This simple check just ensures the token exists.
+        // For a full check, you could call /users/me
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            window.location.href = "login.html";
+        }
+    })();
+  </script>
+</body>
+</html>
