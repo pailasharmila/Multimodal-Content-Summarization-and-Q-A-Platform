@@ -105,11 +105,12 @@ pip install fastapi uvicorn sqlalchemy python-jose[cryptography] passlib[bcrypt]
 
 ### 4. Configure Environment Variables
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root:{some thing like below}
 
 ```env
-DATABASE_URL=sqlite:///./second_brain.db
-JWT_SECRET=your-very-secret-key-change-this
+DATABASE_URL=postgresql://postgres:password@localhost/second_brain
+#DATABASE_URL=sqlite:///./second_brain.db
+JWT_SECRET=738b69071d615a8dd0138c84c18f6532cd6b8006d6f3b16ca768a8fhkeic
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 ```
