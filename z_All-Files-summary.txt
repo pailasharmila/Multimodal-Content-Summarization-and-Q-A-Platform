@@ -1,0 +1,54 @@
+this is a file, which gives the overview of all the files in the project, so that it would be easy to visit and get an overview for the next time when you visit.
+
+--->_pychache_:   
+
+        python creates this file automatically for Speed.
+        If Python had to re-compile every file from scratch on every run, startup would be slower—especially in projects like yours with FastAPI, routers, schemas, services,
+        and background workers.
+        The _pycache_ folder is where Python stores that compiled bytecode.
+        So the flow is:
+        You write app.py → Python compiles it → Python saves the compiled result in _pycache_/app.cpython-311.pyc → next time, Python can start faster.
+        Think of _pycache_ as Python’s memory of “I already figured this out once”.
+        so. no need to commit this file to git
+
+
+--->.vscode :
+        
+        .vscode is Visual Studio Code’s local brain for your project.
+        It’s a folder where VS Code stores project-specific settings so it can behave intelligently for this project and not mess with others.
+        if you want it to commit to git , you can but usually it is not commited t
+
+---->ai_engine:
+
+        here there is "core.py" file , what majorly it do is :
+        Takes a web URL
+        Scrapes the text from the webpage
+        Creates a short summary using an LLM
+        Stores that summary in a vector database (ChromaDB)
+        Indexes the full page text for question-answering (RAG)
+        Lets you:Ask questions about the page; Retrieve the stored summary later
+
+   
+        More details related to core.py:
+        the _pycache_ is auto genertaed and the vector_db is generated because of  this line "db = chromadb.PersistentClient(path="./vector_db")"
+        Here w are using ChromaDB { it's an open-source vector database used for efficiently storing, managing, and searching vector embeddings.}
+        **BAAI/bge-small-en-v1.5** is a popular and efficient English sentence-transformers model.Max Sequence Length It can process inputs up to 512 tokens long
+        Here we are using **Gemma-2B** ,which is very small and very cautious, that's why it:
+        -Has limited context understanding
+        -Tends to compress aggressively
+        -Often produces over-safe, under-detailed summaries
+        larger models like  (7B, 8B, 13B)  do these things naturally.
+        
+          🔥“RAG should answer from its own knowledge if data is not found”
+        ❌ NO — not by default
+        ✅ Only if YOU design it that way
+        Most RAG systems are intentionally knowledge-grounded.
+        Why?
+        Because enterprises want:
+        no hallucinations ;no guessing; no made-up answers
+
+---->brain:
+        all the files related to virtual environment are stored in this folder
+
+---->main.py:
+        

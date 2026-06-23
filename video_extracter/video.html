@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Transcriber</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .spinner {
+            border-top-color: #3498db;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="h-full flex items-center justify-center p-4 bg-gray-900 text-white">
+    <div class="w-full max-w-2xl bg-gray-800 rounded-lg shadow-xl p-8">
+        <h1 class="text-3xl font-bold text-center mb-6">Video Transcription Pipeline</h1>
+        
+        <form id="transcribe-form" class="space-y-4">
+            <div>
+                <label for="video-url" class="block text-sm font-medium text-gray-300 mb-1">Video URL</label>
+                <input type="url" id="video-url" name="video-url"
+                       class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="https://www.youtube.com/watch?v=..."
+                       required>
+            </div>
+            <button type="submit"
+                    id="submit-button"
+                    class="w-full flex justify-center items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800">
+                <span id="button-text">Get Transcript</span>
+                <div id="loading-spinner" class="spinner w-5 h-5 border-4 border-gray-400 border-t-blue-500 rounded-full ml-3 hidden"></div>
+            </button>
+        </form>
+        
+        <div id="result-container" class="mt-8 hidden">
+            <h2 class="text-xl font-semibold mb-3">Transcript Result</h2>
+            <div class="w-full h-64 p-4 bg-gray-900 rounded-md overflow-y-auto border border-gray-700">
+                <pre id="transcript-output" class="text-gray-200 whitespace-pre-wrap text-sm"></pre>
+            </div>
+            <p id="source-message" class="text-sm text-gray-400 mt-2"></p>
+        </div>
+
+        <div id="error-message" class="mt-6 p-4 bg-red-800 border border-red-700 rounded-md text-red-100 hidden">
+            <h3 class="font-bold">Error</h3>
+            <p id="error-text"></p>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('transcribe-form');
+        const urlInput = document.getElementById('video-url');
+        const submitButton = document.getElementById('submit-button');
+        const buttonText = document.getElementById('button-text');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        
+        const resultContainer = document.getElementById('result-container');
+        const transcriptOutput = document.getElementById('transcript-output');
+        const sourceMessage = document.getElementById('source-message');
+        
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+
+        // --- Backend API ---
+        // *** MODIFIED: Point to the new, prefixed route on the main server ***
+        const API_ENDPOINT = "http://127.0.0.1:8000/video/transcribe";
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = urlInput.value;
+            
+            setLoading(true);
+            hideError();
+            resultContainer.classList.add('hidden');
+            
+            // ------------------------------------------------------------------
+            // --- MOCK FUNCTION (Deactivated) ---
+            // ------------------------------------------------------------------
+            // await mockApiCall(url);
+            
+            
+            // ------------------------------------------------------------------
+            // --- REAL API CALL (*** MODIFIED ***) ---
+            // ------------------------------------------------------------------
+            
+            // *** NEW: Get the auth token from localStorage ***
+            const token = localStorage.getItem("accessToken");
+            if (!token) {
+                showError("You are not logged in. Redirecting to login page...");
+                setLoading(false);
+                setTimeout(() => {
+                    // Adjust path if login.html is not in the parent directory
+                    window.location.href = "../login.html"; 
+                }, 2000);
+                return; // Stop the function
+            }
+
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // *** NEW: Add the Authorization header ***
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                // *** NEW: Handle 401 Unauthorized Error ***
+                if (response.status === 401) {
+                    showError("Your session expired. Redirecting to login page...");
+                    setLoading(false);
+                    setTimeout(() => {
+                        window.location.href = "../login.html";
+                    }, 2000);
+                    return; // Stop the function
+                }
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'An unknown error occurred');
+                }
+
+                const data = await response.json();
+                displayResult(data.transcript, `${data.source} (for user ${data.user_email})`);
+
+            } catch (error) {
+                console.error("API call failed:", error);
+                showError(`Failed to get transcript: ${error.message}`);
+            } finally {
+                setLoading(false);
+            }
+            
+        });
+        
+        function mockApiCall(url) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    let mockTranscript = "";
+                    let mockSource = "";
+                    
+                    if (url.includes("ted.com")) {
+                        mockTranscript = "Hello and welcome to this TED talk. \n\nToday, we're going to discuss a fascinating topic. The world is full of wonders, and it's our job to explore them. \n\nThank you very much.";
+                        mockSource = "Found existing transcript (mocked)";
+                    } else {
+                        mockTranscript = "This is a simulated ASR transcript. \nIt's processing the audio from the video because no existing transcript was found. \nThis demonstrates the second part of the pipeline. \nFor example, if I say 'hello world', it should appear here.";
+                        mockSource = "Generated via ASR (mocked)";
+                    }
+                    
+                    displayResult(mockTranscript, mockSource);
+                    setLoading(false);
+                    resolve();
+                }, 2500); // Simulate network and processing delay
+            });
+        }
+
+        function displayResult(transcript, source) {
+            transcriptOutput.textContent = transcript;
+            sourceMessage.textContent = `Source: ${source}`;
+            resultContainer.classList.remove('hidden');
+        }
+
+        function setLoading(isLoading) {
+            if (isLoading) {
+                submitButton.disabled = true;
+                buttonText.textContent = 'Processing...';
+                loadingSpinner.classList.remove('hidden');
+            } else {
+                submitButton.disabled = false;
+                buttonText.textContent = 'Get Transcript';
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+        
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorMessage.classList.add('hidden');
+        }
+
+    </script>
+</body>
+</html>
