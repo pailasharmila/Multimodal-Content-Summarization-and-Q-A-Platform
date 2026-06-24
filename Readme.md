@@ -113,6 +113,8 @@ DATABASE_URL=postgresql://postgres:password@localhost/second_brain
 JWT_SECRET=738b69071d615a8dd0138c84c18f6532cd6b8006d6f3b16ca768a8fhkeic
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+#Add cors in .env during the production so that it won't break
+ALLOWED_ORIGINS=http://127.0.0.1:5500,http://localhost:5500,http://127.0.0.1:8000,http://localhost:8000,http://127.0.0.1:5501,http://localhost:5501
 ```
 
 > ⚠️ Never commit your `.env` file. Add it to `.gitignore`.

@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 # --- AI Engine Imports ---
 from ai_engine.core import process_url, ask_question, get_summary
@@ -24,18 +25,13 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 # --- CORS Middleware ---
-# (Your existing CORS middleware is perfect and will
-#  also apply to the new video routes)
+#importing the cross origin resources from ".env" to get combined
+origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5500", 
-        "http://localhost:5500",
-        "http://127.0.0.1:8000",
-        "http://localhost:8000",
-        # You may need to add the port your video.html is served on
-        # if it's different, e.g., "http://127.0.0.1:5501"
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
