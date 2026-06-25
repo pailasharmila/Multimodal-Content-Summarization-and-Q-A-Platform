@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+import re
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -49,6 +50,17 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
 
+#---enabling user to create a strong password---
+def validate_password_strength(password: str):
+    if len(password) < 8:
+        raise ValueError("Password must be at least 8 characters")
+    if not re.search(r"[A-Z]", password):
+        raise ValueError("Password must contain at least one uppercase letter")
+    if not re.search(r"[0-9]", password):
+        raise ValueError("Password must contain at least one number")
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        raise ValueError("Password must contain at least one special character")
+
 # --- Utility Functions ---
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -89,6 +101,10 @@ def authenticate_user(db: Session, email: str, password: str) -> Optional[models
 
 def create_user(db: Session, user: UserCreate) -> models.User:
     """Creates a new user in the database."""
+    try:
+        validate_password_strength(user.password)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     hashed_password = get_password_hash(user.password)
     db_user = models.User(email=user.email, hashed_password=hashed_password)
     db.add(db_user)
