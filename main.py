@@ -1,6 +1,6 @@
 # main.py 
 from datetime import timedelta
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status,Request
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -37,6 +37,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ---Initalizing the Rate limiter for Password entry during authentication---
+# creating a rate limiter on password trails from a single user using slowapi 
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # --- Pydantic Schemas (Request/Response Models) ---
 class URLRequest(BaseModel):
     url: str
@@ -48,7 +57,9 @@ class QuestionRequest(BaseModel):
 # (Your /token, /register, and /users/me endpoints remain THE SAME) 
 
 @app.post("/token", response_model=auth.Token)
+@limiter.limit("5/minute")
 async def login_for_access_token(
+    request:Request,
     db: Session = Depends(get_db), 
     form_data: OAuth2PasswordRequestForm = Depends()
 ):
